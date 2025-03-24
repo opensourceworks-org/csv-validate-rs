@@ -1,0 +1,7 @@
+/target
+.Idea/
+.env
+gpt.md
+.DS_Store
+output.csv
+output*.csv

@@ -1,0 +1,23 @@
+common:
+  quote_char: '"'
+  separator: ';'
+  has_header: true
+
+validators:
+  - type: illegal_chars
+    illegal_chars: ['!', '5', '?', '@', 'tv']
+    replace_with: ['_', '***NO FIVE***', '.', '-', '!!_________NO____________TV___________!!']
+    fix: false
+    enabled: true
+    common:
+        quote_char: '"'
+        separator: ';'
+        has_header: true
+
+  - type: field_count
+    expected: 50
+    enabled: true
+    common:
+        quote_char: '"'
+        separator: ';'
+        has_header: true
