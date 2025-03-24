@@ -1,14 +1,15 @@
 use std::borrow::Cow;
 
-#[derive(Debug, Clone, PartialEq)]
+/// Single validation issue
+#[derive(Debug)]
 pub struct ValidationIssue {
+    pub validator: &'static str,
     pub line_number: usize,
     pub position: Option<usize>,
     pub message: String,
-    pub fixed: bool,
 }
 
-/// Mutable context explicitly separated from line data
+/// Mutable context explicitly separate from line data
 pub struct ValidationContext {
     pub issues: Vec<ValidationIssue>,
 }
@@ -27,8 +28,13 @@ impl ValidationContext {
     }
 }
 
-/// Represents validator results explicitly, minimal allocation
+/// Validation result explicitly carries forward the current line
 pub struct ValidationResult<'a> {
     pub line: Cow<'a, str>,
-    pub modified: bool,
+}
+
+impl<'a> ValidationResult<'a> {
+    pub fn new(line: &'a str) -> Self {
+        Self { line: Cow::Borrowed(line) }
+    }
 }
