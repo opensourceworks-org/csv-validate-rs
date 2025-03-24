@@ -173,5 +173,5 @@ csv-validate-rs/
 | Low-Level Optimization | Cache-friendly, aligned memory, predictable branching | ✅ |
 | Testing | Unit, integration, Criterion benchmarks          | ✅ |
 | Robustness | Detailed reporting, error-tolerance           | ✅ |
-| **Additional Requirements** | Logging, Encoding, Progress, Interrupt handling, Security, Docs, Python packaging, Metrics, YAML validation, Error aggregation | ✅ **Newly Added** |
+| **Additional Requirements** | Logging, Encoding, Progress, Interrupt handling, Security, Docs, Python packaging, Metrics, YAML validation, Error aggregation | ✅ |
 
