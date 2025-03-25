@@ -1,5 +1,5 @@
-use aho_corasick::AhoCorasick;
 use crate::{ValidationIssue, Validator};
+use aho_corasick::AhoCorasick;
 
 pub struct IllegalCharacterValidator {
     name: &'static str,

@@ -1,8 +1,10 @@
 use crossbeam_channel::unbounded;
-use rayon::ThreadPoolBuilder;
-use csv_validator_core::{IllegalCharacterValidator, Validator, reader::FastBufferedReader, ValidationIssue};
-use std::sync::Arc;
 use csv_validator_core::reader::{OptimizedQuoteAwareReader, QuoteAwareBufferedReader};
+use csv_validator_core::{
+    IllegalCharacterValidator, ValidationIssue, Validator, reader::FastBufferedReader,
+};
+use rayon::ThreadPoolBuilder;
+use std::sync::Arc;
 
 fn main() -> std::io::Result<()> {
     let max_threads = 8;
@@ -15,9 +17,9 @@ fn main() -> std::io::Result<()> {
 
     let (sender, receiver) = unbounded();
 
-    let validators: Arc<Vec<Box<dyn Validator>>> = Arc::new(vec![
-        Box::new(IllegalCharacterValidator::new("IllegalCharValidator", &[r#"137\n"#, "555555", "Zzzzz"]))
-    ]);
+    let validators: Arc<Vec<Box<dyn Validator>>> = Arc::new(vec![Box::new(
+        IllegalCharacterValidator::new("IllegalCharValidator", &[r#"137\n"#, "555555", "Zzzzz", "abcdef", "noway", "654321"]),
+    )]);
 
     let thread_pool = ThreadPoolBuilder::new()
         .num_threads(max_threads)
@@ -33,12 +35,22 @@ fn main() -> std::io::Result<()> {
         batch.push((line_number, line.to_vec()));
 
         if batch.len() >= batch_size {
-            process_batch(batch.drain(..).collect(), validators.clone(), &thread_pool, sender.clone());
+            process_batch(
+                batch.drain(..).collect(),
+                validators.clone(),
+                &thread_pool,
+                sender.clone(),
+            );
         }
     }
 
     if !batch.is_empty() {
-        process_batch(batch.drain(..).collect(), validators.clone(), &thread_pool, sender.clone());
+        process_batch(
+            batch.drain(..).collect(),
+            validators.clone(),
+            &thread_pool,
+            sender.clone(),
+        );
     }
 
     drop(sender);

@@ -1,4 +1,4 @@
-use csv_validator_core::{IllegalCharacterValidator, issue::ValidationContext, Validator};
+use csv_validator_core::{IllegalCharacterValidator, Validator, issue::ValidationContext};
 use pretty_assertions::assert_eq;
 
 #[test]

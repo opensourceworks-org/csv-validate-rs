@@ -1,6 +1,6 @@
 import sys
 
-def validate_csv(file_path, illegal_chars=('555555', 'Zzzzz')):
+def validate_csv(file_path, illegal_chars=(r"137\n", '555555', 'Zzzzz', "abcdef", "noway", "654321")):
     buffer_size = 1024 * 1024  # Explicitly 1MB buffer
     line_number = 0
     issues = []

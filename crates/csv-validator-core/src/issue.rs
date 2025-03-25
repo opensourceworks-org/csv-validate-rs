@@ -8,7 +8,6 @@ pub struct ValidationIssue {
     pub message: String,
 }
 
-
 pub struct ValidationContext {
     pub issues: Vec<ValidationIssue>,
 }
@@ -35,6 +34,8 @@ pub struct ValidationResult<'a> {
 
 impl<'a> ValidationResult<'a> {
     pub fn new(line: &'a str) -> Self {
-        Self { line: Cow::Borrowed(line) }
+        Self {
+            line: Cow::Borrowed(line),
+        }
     }
 }

@@ -22,3 +22,15 @@ pretty_assertions = "1"
 
 [features]
 python = ["pyo3"]
+
+[profile.release]
+opt-level = 3             # Maximum optimization
+lto = "fat"               # Enable full Link Time Optimization
+codegen-units = 1         # Better optimizations at cost of compile speed
+panic = "abort"           # No unwinding overhead
+debug = false             # Remove debug symbols
+incremental = false       # Incremental builds off for better optimizations
+strip = "symbols"
+
+[build]
+rustflags = ["-C", "target-cpu=native"]

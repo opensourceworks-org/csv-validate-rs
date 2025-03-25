@@ -1,8 +1,7 @@
 use memchr::memchr;
-use std::fs::File;
-use std::io::{Cursor, Result, BufReader, BufRead, Read};
 use memmap2::Mmap;
-
+use std::fs::File;
+use std::io::{BufRead, BufReader, Cursor, Read, Result};
 
 pub struct OptimizedQuoteAwareReader {
     reader: BufReader<File>,
@@ -142,7 +141,6 @@ impl FastBufferedReader {
     }
 }
 
-
 /// done: too slow for sequential one-pass reads, replace
 ///
 /// Buffered reader using memory mapping explicitly
@@ -186,7 +184,6 @@ impl BufferedLineReader for MmapBufferedReader {
     }
 }
 
-
 pub trait BufferedLineReader {
     fn next_line(&mut self, buf: &mut String) -> Result<bool>;
 }
@@ -207,13 +204,11 @@ impl FileBufferedReader {
 /// Naive buffered reader for files
 impl BufferedLineReader for FileBufferedReader {
     fn next_line(&mut self, buf: &mut String) -> Result<bool> {
-        buf.clear();  // explicitly clear buffer before reuse
+        buf.clear(); // explicitly clear buffer before reuse
         let bytes = self.reader.read_line(buf)?;
-        Ok(bytes != 0)  // EOF if 0 bytes read
+        Ok(bytes != 0) // EOF if 0 bytes read
     }
 }
-
-
 
 pub struct MemoryBufferedReader<'a> {
     reader: BufReader<Cursor<&'a [u8]>>,
