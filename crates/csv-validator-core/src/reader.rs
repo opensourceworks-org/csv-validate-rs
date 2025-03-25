@@ -36,6 +36,7 @@ impl OptimizedQuoteAwareReader {
             line_buf.extend_from_slice(&self.buf);
 
             // Explicitly count quotes in the current line only at boundaries
+            // todo: pass in the quote character as a parameter
             quote_count += bytecount::count(&self.buf, b'"');
 
             // If quotes balanced explicitly, we have a complete logical line
@@ -72,7 +73,8 @@ impl QuoteAwareBufferedReader {
         })
     }
 
-    /// Reads next logical line, accounting explicitly for quoted newlines
+    // done: too slow, replace
+    // Reads next logical line, accounting explicitly for quoted newlines
     pub fn next_logical_line<'a>(&mut self, line_buf: &'a mut Vec<u8>) -> Result<Option<&'a [u8]>> {
         line_buf.clear();
         loop {
@@ -101,7 +103,6 @@ impl QuoteAwareBufferedReader {
                 b'\n' => {
                     line_buf.push(b);
                     if !self.in_quotes {
-                        // Complete logical line explicitly
                         if line_buf.ends_with(&[b'\n']) {
                             line_buf.pop(); // explicitly remove newline for consistency
                         }
@@ -142,6 +143,8 @@ impl FastBufferedReader {
 }
 
 
+/// done: too slow for sequential one-pass reads, replace
+///
 /// Buffered reader using memory mapping explicitly
 pub struct MmapBufferedReader {
     pub mmap: Mmap,
@@ -184,15 +187,10 @@ impl BufferedLineReader for MmapBufferedReader {
 }
 
 
-/// Trait for explicitly abstracting buffered input sources
 pub trait BufferedLineReader {
-    /// Reads the next line into the provided String buffer.
-    /// Returns Ok(true) if a line was read, Ok(false) if EOF reached.
     fn next_line(&mut self, buf: &mut String) -> Result<bool>;
 }
 
-
-/// Explicit buffered reader from a file
 pub struct FileBufferedReader {
     reader: BufReader<File>,
 }
@@ -206,6 +204,7 @@ impl FileBufferedReader {
     }
 }
 
+/// Naive buffered reader for files
 impl BufferedLineReader for FileBufferedReader {
     fn next_line(&mut self, buf: &mut String) -> Result<bool> {
         buf.clear();  // explicitly clear buffer before reuse
@@ -216,7 +215,6 @@ impl BufferedLineReader for FileBufferedReader {
 
 
 
-/// Explicit buffered reader from an in-memory buffer
 pub struct MemoryBufferedReader<'a> {
     reader: BufReader<Cursor<&'a [u8]>>,
 }

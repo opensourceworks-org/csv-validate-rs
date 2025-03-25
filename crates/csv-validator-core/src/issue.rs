@@ -1,6 +1,5 @@
 use std::borrow::Cow;
 
-/// Single validation issue
 #[derive(Debug)]
 pub struct ValidationIssue {
     pub validator: &'static str,
@@ -10,7 +9,6 @@ pub struct ValidationIssue {
 }
 
 
-/// Mutable context explicitly separate from line data
 pub struct ValidationContext {
     pub issues: Vec<ValidationIssue>,
 }
@@ -30,6 +28,7 @@ impl ValidationContext {
 }
 
 /// Validation result explicitly carries forward the current line
+/// no longer needed since only check-only mode
 pub struct ValidationResult<'a> {
     pub line: Cow<'a, str>,
 }
