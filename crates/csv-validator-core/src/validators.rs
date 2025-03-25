@@ -1,12 +1,12 @@
 use crate::{ValidationIssue, Validator};
 use aho_corasick::AhoCorasick;
 
-pub struct IllegalCharacterValidator {
+pub struct IllegalCharactersValidator {
     name: &'static str,
     matcher: AhoCorasick,
 }
 
-impl IllegalCharacterValidator {
+impl IllegalCharactersValidator {
     pub fn new(name: &'static str, illegal_chars: &[&str]) -> Self {
         Self {
             name,
@@ -15,7 +15,7 @@ impl IllegalCharacterValidator {
     }
 }
 
-impl Validator for IllegalCharacterValidator {
+impl Validator for IllegalCharactersValidator {
     fn validate(&self, line: &[u8], line_number: usize, issues: &mut Vec<ValidationIssue>) {
         for mat in self.matcher.find_iter(line) {
             let illegal_str = &line[mat.start()..mat.end()];
@@ -25,7 +25,7 @@ impl Validator for IllegalCharacterValidator {
                 validator: self.name,
                 line_number,
                 position: Some(mat.start()),
-                message: format!("Illegal character '{}'", illegal_char),
+                message: format!("Illegal character(s) '{}'", illegal_char),
             });
         }
     }

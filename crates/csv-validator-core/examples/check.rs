@@ -1,7 +1,7 @@
 use crossbeam_channel::unbounded;
 use csv_validator_core::reader::{OptimizedQuoteAwareReader, QuoteAwareBufferedReader};
 use csv_validator_core::{
-    IllegalCharacterValidator, ValidationIssue, Validator, reader::FastBufferedReader,
+    IllegalCharactersValidator, ValidationIssue, Validator, reader::FastBufferedReader,
 };
 use rayon::ThreadPoolBuilder;
 use std::sync::Arc;
@@ -11,14 +11,14 @@ fn main() -> std::io::Result<()> {
     let batch_size = 100_000;
     let buffer_capacity = 8 * 1024 * 1024;
 
-    let file_path = "examples/output_2g.csv";
+    let file_path = "examples/output.csv";
     //let mut reader = QuoteAwareBufferedReader::open(file_path, buffer_capacity)?;
     let mut reader = OptimizedQuoteAwareReader::open(file_path, buffer_capacity)?;
 
     let (sender, receiver) = unbounded();
 
     let validators: Arc<Vec<Box<dyn Validator>>> = Arc::new(vec![Box::new(
-        IllegalCharacterValidator::new("IllegalCharValidator", &[r#"137\n"#, "555555", "Zzzzz", "abcdef", "noway", "654321"]),
+        IllegalCharactersValidator::new("IllegalCharValidator", &[r#"137\n"#, "555555", "Zzzzz", "abcdef", "noway", "654321"]),
     )]);
 
     let thread_pool = ThreadPoolBuilder::new()
