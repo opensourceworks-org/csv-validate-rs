@@ -1,8 +1,118 @@
 use memchr::memchr;
 use std::fs::File;
-use std::io::{Cursor, Result, BufReader, BufRead};
+use std::io::{Cursor, Result, BufReader, BufRead, Read};
 use memmap2::Mmap;
 
+
+pub struct OptimizedQuoteAwareReader {
+    reader: BufReader<File>,
+    buf: Vec<u8>,
+}
+
+impl OptimizedQuoteAwareReader {
+    pub fn open(path: &str, capacity: usize) -> Result<Self> {
+        Ok(Self {
+            reader: BufReader::with_capacity(capacity, File::open(path)?),
+            buf: Vec::with_capacity(8192),
+        })
+    }
+
+    pub fn next_logical_line<'a>(&mut self, line_buf: &'a mut Vec<u8>) -> Result<Option<&'a [u8]>> {
+        line_buf.clear();
+        let mut quote_count = 0;
+
+        loop {
+            self.buf.clear();
+            let bytes_read = self.reader.read_until(b'\n', &mut self.buf)?;
+
+            if bytes_read == 0 {
+                if line_buf.is_empty() {
+                    return Ok(None);
+                } else {
+                    return Ok(Some(line_buf));
+                }
+            }
+
+            line_buf.extend_from_slice(&self.buf);
+
+            // Explicitly count quotes in the current line only at boundaries
+            quote_count += bytecount::count(&self.buf, b'"');
+
+            // If quotes balanced explicitly, we have a complete logical line
+            if quote_count % 2 == 0 {
+                if line_buf.ends_with(&[b'\n']) {
+                    line_buf.pop(); // remove trailing newline explicitly
+                }
+                return Ok(Some(line_buf));
+            }
+            // else continue reading explicitly
+        }
+    }
+}
+
+pub struct QuoteAwareBufferedReader {
+    reader: BufReader<File>,
+    buffer: Vec<u8>,
+    position: usize,
+    bytes_read: usize,
+    eof: bool,
+    in_quotes: bool,
+}
+
+impl QuoteAwareBufferedReader {
+    pub fn open(path: &str, buffer_capacity: usize) -> Result<Self> {
+        let file = File::open(path)?;
+        Ok(Self {
+            reader: BufReader::with_capacity(buffer_capacity, file),
+            buffer: vec![0; buffer_capacity],
+            position: 0,
+            bytes_read: 0,
+            eof: false,
+            in_quotes: false,
+        })
+    }
+
+    /// Reads next logical line, accounting explicitly for quoted newlines
+    pub fn next_logical_line<'a>(&mut self, line_buf: &'a mut Vec<u8>) -> Result<Option<&'a [u8]>> {
+        line_buf.clear();
+        loop {
+            if self.position >= self.bytes_read {
+                // Refill buffer explicitly
+                self.bytes_read = self.reader.read(&mut self.buffer)?;
+                self.position = 0;
+                if self.bytes_read == 0 {
+                    self.eof = true;
+                    if !line_buf.is_empty() {
+                        return Ok(Some(line_buf));
+                    } else {
+                        return Ok(None);
+                    }
+                }
+            }
+
+            let b = self.buffer[self.position];
+            self.position += 1;
+
+            match b {
+                b'"' => {
+                    self.in_quotes = !self.in_quotes; // explicitly toggle quote state
+                    line_buf.push(b);
+                }
+                b'\n' => {
+                    line_buf.push(b);
+                    if !self.in_quotes {
+                        // Complete logical line explicitly
+                        if line_buf.ends_with(&[b'\n']) {
+                            line_buf.pop(); // explicitly remove newline for consistency
+                        }
+                        return Ok(Some(line_buf));
+                    }
+                }
+                _ => line_buf.push(b),
+            }
+        }
+    }
+}
 
 pub struct FastBufferedReader {
     pub reader: BufReader<File>,
