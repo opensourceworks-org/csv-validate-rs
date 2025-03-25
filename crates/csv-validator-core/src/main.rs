@@ -1,65 +1,72 @@
 use crossbeam_channel::{unbounded, Sender};
 use rayon::ThreadPoolBuilder;
-use csv_validator_core::{IllegalCharacterValidator, Validator};
+use csv_validator_core::{reader::FastBufferedReader, IllegalCharacterValidator, Validator};
 use std::sync::Arc;
 
-fn main() {
-    let lines = vec![
-        "hello world",
-        "hello@world",
-        "good!morning",
-        "clean_line",
-        "another@line!",
-        "more clean data",
-    ];
 
-    // Explicitly define resource management limits
-    let max_threads = 4; // Explicit thread control
-    let batch_size = 2;  // Explicit batching
 
-    // Explicitly setup channel for reporting issues
+fn main() -> std::io::Result<()> {
+    let max_threads = 4;
+    let batch_size = 100_000; // explicitly large batch size
+    let buffer_capacity = 8 * 1024 * 1024; // 8MB buffer explicitly
+
+    let file_path = "large_test_file.csv";
+    let mut reader = FastBufferedReader::open(file_path, buffer_capacity)?;
+
     let (sender, receiver) = unbounded();
 
-    // Validators
     let validators: Arc<Vec<Box<dyn Validator>>> = Arc::new(vec![
         Box::new(IllegalCharacterValidator::new("IllegalCharValidator", &["@", "!"]))
     ]);
 
-    // Configure rayon thread pool explicitly
     let thread_pool = ThreadPoolBuilder::new()
         .num_threads(max_threads)
         .build()
-        .expect("ThreadPool failed");
+        .expect("ThreadPool setup failed");
 
-    // Process explicitly in batches
-    for batch in lines.chunks(batch_size) {
-        let sender = sender.clone();
-        let validators = Arc::clone(&validators);
+    let mut batch = Vec::with_capacity(batch_size);
+    let mut line_number = 0;
 
-        // Explicitly use rayon for parallel processing per batch
-        thread_pool.scope(|s| {
-            for (idx, line) in batch.iter().enumerate() {
-                let sender = sender.clone();
-                let validators = Arc::clone(&validators);
-                let line_number = idx + 1; // Adjust if needed for global indexing
+    while let Some(line) = reader.next_line()? {
+        line_number += 1;
+        batch.push((line_number, line.to_vec())); // explicitly minimal allocation
 
-                s.spawn(move |_| {
-                    for validator in validators.iter() {
-                        validator.validate(line, line_number, &sender);
-                    }
-                });
-            }
-        });
+        if batch.len() >= batch_size {
+            process_batch(batch.drain(..).collect(), &validators, &thread_pool, sender.clone());
+        }
     }
 
-    // Drop the last sender explicitly
+    if !batch.is_empty() {
+        process_batch(batch.drain(..).collect(), &validators, &thread_pool, sender.clone());
+    }
+
     drop(sender);
 
-    // Explicitly collect and print issues
-    receiver.iter().for_each(|issue| {
+    for issue in receiver.iter().flatten() {
         println!(
             "[{}] Line {}, Position {:?}: {}",
             issue.validator, issue.line_number, issue.position, issue.message
         );
+    }
+
+    Ok(())
+}
+
+fn process_batch(
+    lines: Vec<(usize, Vec<u8>)>,
+    validators: &Arc<Vec<Box<dyn Validator>>>,
+    thread_pool: &rayon::ThreadPool,
+    sender: crossbeam_channel::Sender<Vec<csv_validator_core::ValidationIssue>>,
+) {
+    thread_pool.spawn(move || {
+        let mut issues_batch = Vec::new();
+
+        for (line_number, line) in lines {
+            for validator in validators.iter() {
+                validator.validate(&line, line_number, &mut issues_batch);
+            }
+        }
+
+        sender.send(issues_batch).expect("send failed");
     });
 }

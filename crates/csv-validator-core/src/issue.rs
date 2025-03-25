@@ -9,6 +9,7 @@ pub struct ValidationIssue {
     pub message: String,
 }
 
+
 /// Mutable context explicitly separate from line data
 pub struct ValidationContext {
     pub issues: Vec<ValidationIssue>,

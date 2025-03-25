@@ -3,6 +3,35 @@ use std::fs::File;
 use std::io::{Cursor, Result, BufReader, BufRead};
 use memmap2::Mmap;
 
+
+pub struct FastBufferedReader {
+    pub reader: BufReader<File>,
+    pub buffer: Vec<u8>,
+}
+
+impl FastBufferedReader {
+    pub fn open(path: &str, capacity: usize) -> Result<Self> {
+        let file = File::open(path)?;
+        Ok(Self {
+            reader: BufReader::with_capacity(capacity, file),
+            buffer: Vec::with_capacity(1024), // explicitly reused buffer
+        })
+    }
+
+    pub fn next_line(&mut self) -> Result<Option<&[u8]>> {
+        self.buffer.clear();
+        let bytes_read = self.reader.read_until(b'\n', &mut self.buffer)?;
+        if bytes_read == 0 {
+            return Ok(None);
+        }
+        if self.buffer.ends_with(&[b'\n']) {
+            self.buffer.pop();
+        }
+        Ok(Some(&self.buffer))
+    }
+}
+
+
 /// Buffered reader using memory mapping explicitly
 pub struct MmapBufferedReader {
     pub mmap: Mmap,

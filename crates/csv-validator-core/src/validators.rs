@@ -1,6 +1,5 @@
 use aho_corasick::AhoCorasick;
 use crate::{ValidationIssue, Validator};
-use crossbeam_channel::Sender;
 
 pub struct IllegalCharacterValidator {
     name: &'static str,
@@ -17,19 +16,17 @@ impl IllegalCharacterValidator {
 }
 
 impl Validator for IllegalCharacterValidator {
-    fn validate(
-        &self,
-        line: &str,
-        line_number: usize,
-        sender: &Sender<ValidationIssue>,
-    ) {
+    fn validate(&self, line: &[u8], line_number: usize, issues: &mut Vec<ValidationIssue>) {
         for mat in self.matcher.find_iter(line) {
-            sender.send(ValidationIssue {
+            let illegal_str = &line[mat.start()..mat.end()];
+            let illegal_char = std::str::from_utf8(illegal_str).unwrap_or("<invalid utf8>");
+
+            issues.push(ValidationIssue {
                 validator: self.name,
                 line_number,
                 position: Some(mat.start()),
-                message: format!("Illegal character found: '{}'", &line[mat.start()..mat.end()]),
-            }).expect("Send issue failed");
+                message: format!("Illegal character '{}'", illegal_char),
+            });
         }
     }
 
