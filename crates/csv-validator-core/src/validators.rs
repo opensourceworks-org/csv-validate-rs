@@ -1,4 +1,4 @@
-use crate::{ValidationIssue, Validator};
+pub use crate::{ValidationIssue, Validator};
 use aho_corasick::AhoCorasick;
 
 pub struct IllegalCharactersValidator {
@@ -16,6 +16,7 @@ impl IllegalCharactersValidator {
 }
 
 impl Validator for IllegalCharactersValidator {
+
     fn validate(&self, line: &[u8], line_number: usize, issues: &mut Vec<ValidationIssue>) {
         for mat in self.matcher.find_iter(line) {
             let illegal_str = &line[mat.start()..mat.end()];

@@ -1,7 +1,7 @@
 mod issue;
 pub mod reader;
 mod validator;
-mod validators;
+pub mod validators;
 mod executor;
 
 pub use issue::ValidationIssue;

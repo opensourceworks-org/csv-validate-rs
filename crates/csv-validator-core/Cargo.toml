@@ -32,5 +32,5 @@ debug = false             # Remove debug symbols
 incremental = false       # Incremental builds off for better optimizations
 strip = "symbols"
 
-[build]
-rustflags = ["-C", "target-cpu=native"]
+# [build]
+# rustflags = ["-C", "target-cpu=native"]

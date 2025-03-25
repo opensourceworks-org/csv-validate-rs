@@ -3,20 +3,28 @@ use memmap2::Mmap;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Cursor, Read, Result};
 
-pub struct OptimizedQuoteAwareReader {
-    reader: BufReader<File>,
+pub struct OptimizedQuoteAwareReader<R: Read> {
+    reader: BufReader<R>,
     buf: Vec<u8>,
 }
 
-impl OptimizedQuoteAwareReader {
+impl OptimizedQuoteAwareReader<File> {
+    pub fn open(path: &str, capacity: usize) -> Result<Self> {
+        let file = File::open(path)?;
+        Ok(OptimizedQuoteAwareReader::new(file, capacity))
+    }
+}
+
+impl<R: Read> OptimizedQuoteAwareReader<R>{
     // todo: either derive or pass in the capacity as a parameter
     // same for the quote character
-    pub fn open(path: &str, capacity: usize) -> Result<Self> {
-        Ok(Self {
-            reader: BufReader::with_capacity(capacity, File::open(path)?),
+    pub fn new(reader: R, capacity: usize) -> Self {
+        Self {
+            reader: BufReader::with_capacity(capacity, reader),
             buf: Vec::with_capacity(8192),
-        })
+        }
     }
+
 
     pub fn next_logical_line<'a>(&mut self, line_buf: &'a mut Vec<u8>) -> Result<Option<&'a [u8]>> {
         line_buf.clear();
@@ -35,18 +43,14 @@ impl OptimizedQuoteAwareReader {
             }
 
             line_buf.extend_from_slice(&self.buf);
-
-            // count quotes in the current line only at boundaries using simd bytecount
             quote_count += bytecount::count(&self.buf, b'"');
 
-            // If quotes balanced explicitly, we have a complete logical line
             if quote_count % 2 == 0 {
                 if line_buf.ends_with(&[b'\n']) {
-                    line_buf.pop(); // remove trailing newline explicitly
+                    line_buf.pop();
                 }
                 return Ok(Some(line_buf));
             }
-            // else continue reading explicitly
         }
     }
 }
