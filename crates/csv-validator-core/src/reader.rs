@@ -9,6 +9,8 @@ pub struct OptimizedQuoteAwareReader {
 }
 
 impl OptimizedQuoteAwareReader {
+    // todo: either derive or pass in the capacity as a parameter
+    // same for the quote character
     pub fn open(path: &str, capacity: usize) -> Result<Self> {
         Ok(Self {
             reader: BufReader::with_capacity(capacity, File::open(path)?),
@@ -34,8 +36,7 @@ impl OptimizedQuoteAwareReader {
 
             line_buf.extend_from_slice(&self.buf);
 
-            // Explicitly count quotes in the current line only at boundaries
-            // todo: pass in the quote character as a parameter
+            // count quotes in the current line only at boundaries using simd bytecount
             quote_count += bytecount::count(&self.buf, b'"');
 
             // If quotes balanced explicitly, we have a complete logical line
