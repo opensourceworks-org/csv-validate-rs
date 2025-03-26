@@ -1,0 +1,31 @@
+[build-system]
+requires = ["maturin>=1.8,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "csv-validators"
+description = "<csv-validators ⚡> Yet Another CSV Validator Combinator"
+readme = { file = "README.md", content-type = "text/markdown" }
+authors = [{ name = "Jeroen", email = "jeroen@flexworks.eu" }]
+
+
+requires-python = ">=3.10"
+classifiers = [
+  "Programming Language :: Rust",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+dynamic = ["version"]
+
+
+[tool.maturin]
+features = ["pyo3/extension-module"]
+
+[dependency-groups]
+dev = []
+
+[project.urls]
+Homepage = "https://github.com/opensourceworks-org/csv-validate-rs"
+Documentation = "https://github.com/opensourceworks-org/csv-validate-rs/blob/main/crates/csv-validators/README.md"
+Repository = "https://github.com/opensourceworks-org/csv-validate-rs/blob/main/crates/csv-validators"
+BugTracker = "https://github.com/opensourceworks-org/csv-validate-rs/issues"
