@@ -1,7 +1,6 @@
 use pyo3::prelude::*;
 use pyo3::types::{PyModule};
 
-use csv_validator_core::
 
 #[pyfunction]
 pub fn jahallo(py: Python) -> PyResult<String>{
