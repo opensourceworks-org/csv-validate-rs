@@ -1,9 +1,9 @@
-use csv_validator_core::{IllegalCharacterValidator, Validator, issue::ValidationContext};
+use csv_validator_core::{IllegalCharacterValidator, Validator, issue::ValidationContext, IllegalCharactersValidator};
 use pretty_assertions::assert_eq;
 
 #[test]
 fn illegal_character_validator_check_only_mode() {
-    let validator = IllegalCharacterValidator::new(&["@"], &["_"]);
+    let validator = IllegalCharactersValidator::new( &["_"]);
     let mut context = ValidationContext::new();
 
     let input = "hello@world";
@@ -16,7 +16,7 @@ fn illegal_character_validator_check_only_mode() {
 
 #[test]
 fn illegal_character_validator_fix_mode() {
-    let validator = IllegalCharacterValidator::new(&["@"], &["_"]);
+    let validator = IllegalCharactersValidator::new( &["_"]);
     let mut context = ValidationContext::new();
 
     let input = "hello@world";
@@ -29,8 +29,8 @@ fn illegal_character_validator_fix_mode() {
 
 #[test]
 fn validator_chaining_example() {
-    let illegal_char_validator = IllegalCharacterValidator::new(&["@"], &["_"]);
-    let another_illegal_validator = IllegalCharacterValidator::new(&["!"], &["."]);
+    let illegal_char_validator = IllegalCharactersValidator::new( &["_"]);
+    let another_illegal_validator = IllegalCharactersValidator::new(&["!"], &["."]);
     let validators: Vec<&dyn Validator> = vec![&illegal_char_validator, &another_illegal_validator];
 
     let mut context = ValidationContext::new();

@@ -244,9 +244,10 @@ dependencies = [
 
 [[package]]
 name = "csv-validators"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "csv-validator-core",
+ "num_cpus",
  "pyo3",
  "serde",
  "serde_json",

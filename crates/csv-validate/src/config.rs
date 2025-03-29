@@ -55,7 +55,6 @@ pub fn build_validators_from_config(config: ConfigFile) -> Vec<Box<dyn Validator
                 ..
             } if enabled => {
                 out.push(Box::new(IllegalCharactersValidator::new(
-                    "IllegalCharValidator",
                     &illegal_chars.iter().map(AsRef::as_ref).collect::<Vec<_>>(),
                 ))as Box<dyn Validator>);
             }
@@ -69,7 +68,6 @@ pub fn build_validators_from_config(config: ConfigFile) -> Vec<Box<dyn Validator
                     .and_then(|c| c.separator)
                     .unwrap_or(';') as u8;
                 out.push(Box::new(FieldCountValidator::new(
-                    "FieldCountValidator",
                     expected,
                     sep,
                 )) as Box<dyn Validator>);
@@ -81,34 +79,3 @@ pub fn build_validators_from_config(config: ConfigFile) -> Vec<Box<dyn Validator
     out
 }
 
-pub fn build_validator_from_cli(args: &CliArgs) -> anyhow::Result<Vec<Box<dyn Validator>>> {
-    let mut v: Vec<Box<dyn Validator>> = Vec::new();
-
-    match args.validator.as_deref() {
-        Some("illegal_chars") => {
-            let chars: Vec<&str> = args
-                .illegal_chars
-                .as_ref()
-                .map(|s| s.split(',').collect())
-                .unwrap_or_else(|| vec!["@", "!"]);
-            v.push(Box::new(IllegalCharactersValidator::new("IllegalCharValidator", &chars)));
-        }
-        Some("field_count") => {
-            let expected = args.field_count.unwrap_or(10);
-            v.push(Box::new(FieldCountValidator::new(
-                "FieldCountValidator",
-                expected,
-                args.separator as u8,
-            ))as Box<dyn Validator>);
-        }
-        Some("line_length") => {
-            v.push(Box::new(LineLengthValidator::new(
-                "LineLengthValidator",
-                args.max_line_length,
-            ))as Box<dyn Validator>);
-        }
-        _ => return Err(anyhow::anyhow!("Unknown or missing validator")),
-    }
-
-    Ok(v)
-}

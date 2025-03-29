@@ -5,4 +5,6 @@ use crossbeam_channel::Sender;
 pub trait Validator: Send + Sync {
     fn validate(&self, line: &[u8], line_number: usize, issues: &mut Vec<ValidationIssue>);
     fn name(&self) -> &'static str;
+    fn clone_box(&self) -> Box<dyn Validator>;
 }
+
