@@ -6,3 +6,4 @@ gpt.md
 output.csv
 output*.csv
 INSTRUCT.md
+.venv
